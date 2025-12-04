@@ -11,6 +11,9 @@ vim.opt.clipboard = "unnamedplus"
 vim.opt.swapfile = false
 vim.g.mapleader = " "
 
+-- Quick escape with jk (faster than reaching for Esc)
+vim.keymap.set("i", "jk", "<Esc>", { desc = "Exit insert mode" })
+
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
     vim.fn.system({
@@ -176,6 +179,244 @@ require("lazy").setup({
             { "<C-k>", "<cmd>TmuxNavigateUp<cr>" },
             { "<C-l>", "<cmd>TmuxNavigateRight<cr>" },
         },
+    },
+
+    -----------------------------------------------------
+    -- WHICH-KEY: Shows available keybindings
+    -- Press <Space> and wait to see all leader bindings
+    -----------------------------------------------------
+    {
+        "folke/which-key.nvim",
+        event = "VeryLazy",
+        config = function()
+            local wk = require("which-key")
+            wk.setup({
+                delay = 300,  -- Show popup after 300ms
+            })
+            -- Add labels for key groups
+            wk.add({
+                { "<leader>c", group = "code" },
+                { "<leader>f", group = "find" },
+                { "<leader>g", group = "git" },
+                { "<leader>t", group = "toggle" },
+            })
+        end,
+    },
+
+    -----------------------------------------------------
+    -- AUTO-PAIRS: Automatically close brackets, quotes
+    -----------------------------------------------------
+    {
+        "windwp/nvim-autopairs",
+        event = "InsertEnter",
+        config = function()
+            require("nvim-autopairs").setup({
+                check_ts = true,  -- Use treesitter for smarter pairs
+            })
+        end,
+    },
+
+    -----------------------------------------------------
+    -- LUALINE: Statusline
+    -- Shows mode, file, git branch, LSP status
+    -----------------------------------------------------
+    {
+        "nvim-lualine/lualine.nvim",
+        dependencies = { "nvim-tree/nvim-web-devicons" },
+        config = function()
+            require("lualine").setup({
+                options = {
+                    theme = "tokyonight",
+                    component_separators = { left = "", right = "" },
+                    section_separators = { left = "", right = "" },
+                },
+                sections = {
+                    lualine_a = { "mode" },
+                    lualine_b = { "branch", "diff", "diagnostics" },
+                    lualine_c = { "filename" },
+                    lualine_x = { "encoding", "filetype" },
+                    lualine_y = { "progress" },
+                    lualine_z = { "location" },
+                },
+            })
+        end,
+    },
+
+    -----------------------------------------------------
+    -- GITSIGNS: Git diff in the gutter
+    -- Shows added/changed/deleted lines
+    -----------------------------------------------------
+    {
+        "lewis6991/gitsigns.nvim",
+        config = function()
+            require("gitsigns").setup({
+                signs = {
+                    add = { text = "│" },
+                    change = { text = "│" },
+                    delete = { text = "_" },
+                    topdelete = { text = "‾" },
+                    changedelete = { text = "~" },
+                },
+                on_attach = function(bufnr)
+                    local gs = package.loaded.gitsigns
+                    local opts = { buffer = bufnr }
+
+                    -- Navigation between hunks
+                    vim.keymap.set("n", "]h", gs.next_hunk, opts)
+                    vim.keymap.set("n", "[h", gs.prev_hunk, opts)
+
+                    -- Actions
+                    vim.keymap.set("n", "<leader>gs", gs.stage_hunk, opts)
+                    vim.keymap.set("n", "<leader>gr", gs.reset_hunk, opts)
+                    vim.keymap.set("n", "<leader>gp", gs.preview_hunk, opts)
+                    vim.keymap.set("n", "<leader>gb", gs.blame_line, opts)
+                end,
+            })
+        end,
+    },
+
+    -----------------------------------------------------
+    -- CONFORM: Format on save
+    -- Auto-runs black, rustfmt, gofmt, etc.
+    -----------------------------------------------------
+    {
+        "stevearc/conform.nvim",
+        event = { "BufWritePre" },
+        cmd = { "ConformInfo" },
+        config = function()
+            require("conform").setup({
+                formatters_by_ft = {
+                    python = { "black" },
+                    rust = { "rustfmt" },
+                    go = { "gofmt" },
+                    lua = { "stylua" },
+                    c = { "clang-format" },
+                    cpp = { "clang-format" },
+                },
+                format_on_save = {
+                    timeout_ms = 500,
+                    lsp_fallback = true,
+                },
+            })
+        end,
+    },
+
+    -----------------------------------------------------
+    -- COMMENT: Easy commenting
+    -- gcc = comment line, gc = comment selection
+    -----------------------------------------------------
+    {
+        "numToStr/Comment.nvim",
+        event = "VeryLazy",
+        config = function()
+            require("Comment").setup()
+        end,
+    },
+
+    -----------------------------------------------------
+    -- LEAP: Fast navigation
+    -- s + 2 chars to jump anywhere visible
+    -----------------------------------------------------
+    {
+        "ggandor/leap.nvim",
+        config = function()
+            -- Modern mapping setup (add_default_mappings is deprecated)
+            vim.keymap.set("n", "s", "<Plug>(leap-forward)")
+            vim.keymap.set("n", "S", "<Plug>(leap-backward)")
+            vim.keymap.set({"x", "o"}, "s", "<Plug>(leap-forward)")
+            vim.keymap.set({"x", "o"}, "S", "<Plug>(leap-backward)")
+        end,
+    },
+
+    -----------------------------------------------------
+    -- MINI.SURROUND: Change/add/delete surroundings
+    -- sa = add, sd = delete, sr = replace
+    -- Example: saiw" adds quotes around word
+    -----------------------------------------------------
+    {
+        "echasnovski/mini.surround",
+        version = false,
+        config = function()
+            require("mini.surround").setup({
+                mappings = {
+                    add = "sa",            -- Add surrounding
+                    delete = "sd",         -- Delete surrounding
+                    replace = "sr",        -- Replace surrounding
+                    find = "sf",           -- Find surrounding
+                    find_left = "sF",      -- Find surrounding (left)
+                    highlight = "sh",      -- Highlight surrounding
+                    update_n_lines = "sn", -- Update n_lines
+                },
+            })
+        end,
+    },
+
+    -----------------------------------------------------
+    -- INDENT-BLANKLINE: Visual indent guides
+    -----------------------------------------------------
+    {
+        "lukas-reineke/indent-blankline.nvim",
+        main = "ibl",
+        config = function()
+            require("ibl").setup({
+                indent = { char = "│" },
+                scope = { enabled = true },
+            })
+        end,
+    },
+
+    -----------------------------------------------------
+    -- TROUBLE: Better diagnostics list
+    -- <leader>xx to toggle
+    -----------------------------------------------------
+    {
+        "folke/trouble.nvim",
+        dependencies = { "nvim-tree/nvim-web-devicons" },
+        config = function()
+            require("trouble").setup()
+            vim.keymap.set("n", "<leader>xx", "<cmd>Trouble diagnostics toggle<cr>")
+            vim.keymap.set("n", "<leader>xd", "<cmd>Trouble diagnostics toggle filter.buf=0<cr>")
+        end,
+    },
+
+    -----------------------------------------------------
+    -- TODO-COMMENTS: Highlight TODO, FIXME, etc.
+    -----------------------------------------------------
+    {
+        "folke/todo-comments.nvim",
+        dependencies = { "nvim-lua/plenary.nvim" },
+        config = function()
+            require("todo-comments").setup()
+            vim.keymap.set("n", "<leader>xt", "<cmd>TodoTrouble<cr>")
+        end,
+    },
+
+    -----------------------------------------------------
+    -- TELESCOPE: Fuzzy finder
+    -- <leader>ff = find files, <leader>fg = live grep
+    -----------------------------------------------------
+    {
+        "nvim-telescope/telescope.nvim",
+        branch = "0.1.x",
+        dependencies = { "nvim-lua/plenary.nvim" },
+        config = function()
+            local telescope = require("telescope")
+            local builtin = require("telescope.builtin")
+
+            telescope.setup({
+                defaults = {
+                    file_ignore_patterns = { "node_modules", ".git/", "target/" },
+                },
+            })
+
+            -- Keybindings
+            vim.keymap.set("n", "<leader>ff", builtin.find_files, { desc = "Find files" })
+            vim.keymap.set("n", "<leader>fg", builtin.live_grep, { desc = "Live grep" })
+            vim.keymap.set("n", "<leader>fb", builtin.buffers, { desc = "Find buffers" })
+            vim.keymap.set("n", "<leader>fh", builtin.help_tags, { desc = "Help tags" })
+            vim.keymap.set("n", "<leader>fr", builtin.oldfiles, { desc = "Recent files" })
+            vim.keymap.set("n", "<leader>fc", builtin.commands, { desc = "Commands" })
+        end,
     },
 })
 

@@ -1,5 +1,5 @@
 -- ===========================================
--- WARMUP GAME v2
+-- WARMUP GAME v3
 -- Practice your keybindings!
 --
 -- Commands:
@@ -7,9 +7,11 @@
 --   :Warmup [category]  - Practice specific category
 --   :WarmupStats        - View your progress
 --   :WarmupWeak         - Practice your weak spots
---   :WarmupPractice     - Live practice mode
+--   :WarmupExplain      - Learn keybindings with explanations
 --
--- Categories: motions, editing, search, lsp, navigation, tmux, splits
+-- Categories:
+--   motions, editing, search, lsp, navigation, tmux, splits,
+--   commands, textobjects, registers, marks, macros, plugins
 -- ===========================================
 
 local M = {}
@@ -557,6 +559,482 @@ M.all_challenges = {
         category = "commands",
         before = "[type :vs filename]",
         after  = "[split with file]",
+    },
+
+    -- TEXT OBJECTS (the real vim superpower)
+    {
+        keys = "iw",
+        desc = "Inner word (no surrounding space)",
+        mode = "n",
+        category = "textobjects",
+        before = "hello |world foo",
+        after  = "[selects 'world' only]",
+        explanation = "Use with operators: diw, ciw, yiw. The 'inner' version excludes surrounding whitespace.",
+    },
+    {
+        keys = "aw",
+        desc = "A word (includes trailing space)",
+        mode = "n",
+        category = "textobjects",
+        before = "hello |world foo",
+        after  = "[selects 'world ' with space]",
+        explanation = "Use with operators: daw removes word AND space, keeping text clean.",
+    },
+    {
+        keys = "i\"",
+        desc = "Inner quotes",
+        mode = "n",
+        category = "textobjects",
+        before = 'name = "|hello"',
+        after  = '[selects hello]',
+        explanation = "Works with \", ', and `. Cursor can be anywhere between quotes.",
+        aliases = { 'i"', "iquote" },
+    },
+    {
+        keys = "a\"",
+        desc = "A quoted string (includes quotes)",
+        mode = "n",
+        category = "textobjects",
+        before = 'name = "|hello"',
+        after  = '[selects "hello" with quotes]',
+        aliases = { 'a"', "aquote" },
+    },
+    {
+        keys = "i(",
+        desc = "Inner parentheses",
+        mode = "n",
+        category = "textobjects",
+        before = "func(|arg1, arg2)",
+        after  = "[selects arg1, arg2]",
+        explanation = "Also works: i), ib. Essential for changing function arguments.",
+        aliases = { "i)", "ib" },
+    },
+    {
+        keys = "a(",
+        desc = "A parenthesized block",
+        mode = "n",
+        category = "textobjects",
+        before = "func(|arg1, arg2)",
+        after  = "[selects (arg1, arg2)]",
+        aliases = { "a)", "ab" },
+    },
+    {
+        keys = "i{",
+        desc = "Inner braces",
+        mode = "n",
+        category = "textobjects",
+        before = "if true {| code }",
+        after  = "[selects code]",
+        explanation = "Also: i}, iB. Perfect for deleting/changing function bodies.",
+        aliases = { "i}", "iB" },
+    },
+    {
+        keys = "a{",
+        desc = "A braced block",
+        mode = "n",
+        category = "textobjects",
+        before = "if true {| code }",
+        after  = "[selects { code }]",
+        aliases = { "a}", "aB" },
+    },
+    {
+        keys = "ip",
+        desc = "Inner paragraph",
+        mode = "n",
+        category = "textobjects",
+        before = "[cursor in middle of paragraph]",
+        after  = "[selects paragraph without blanks]",
+        explanation = "Paragraphs are separated by blank lines. Great for reformatting.",
+    },
+    {
+        keys = "ap",
+        desc = "A paragraph (includes trailing blank)",
+        mode = "n",
+        category = "textobjects",
+        before = "[cursor in paragraph]",
+        after  = "[selects paragraph + blank line]",
+    },
+    {
+        keys = "it",
+        desc = "Inner tag (HTML/XML)",
+        mode = "n",
+        category = "textobjects",
+        before = "<div>|content</div>",
+        after  = "[selects content]",
+        explanation = "Works with any HTML/XML tag. cit changes tag content.",
+    },
+    {
+        keys = "at",
+        desc = "A tag (includes tags)",
+        mode = "n",
+        category = "textobjects",
+        before = "<div>|content</div>",
+        after  = "[selects <div>content</div>]",
+    },
+    {
+        keys = "is",
+        desc = "Inner sentence",
+        mode = "n",
+        category = "textobjects",
+        before = "First sentence. |Second one. Third.",
+        after  = "[selects Second one.]",
+    },
+
+    -- REGISTERS
+    {
+        keys = "\"ay",
+        desc = "Yank into register 'a'",
+        mode = "n",
+        category = "registers",
+        before = "|hello world",
+        after  = "[line yanked to register a]",
+        explanation = "Named registers a-z store text separately. Uppercase (A-Z) appends.",
+        aliases = { '"ay', '"ayy' },
+    },
+    {
+        keys = "\"ap",
+        desc = "Paste from register 'a'",
+        mode = "n",
+        category = "registers",
+        before = "[cursor here]",
+        after  = "[contents of register a pasted]",
+        aliases = { '"ap' },
+    },
+    {
+        keys = "\"0p",
+        desc = "Paste last yank (not delete)",
+        mode = "n",
+        category = "registers",
+        before = "[after yy then dd]",
+        after  = "[pastes the yy, not the dd]",
+        explanation = "Register 0 always has your last yank. Deletions go to \"1-9 and \"\".",
+        aliases = { '"0p' },
+    },
+    {
+        keys = "\"_d",
+        desc = "Delete to black hole (no register)",
+        mode = "n",
+        category = "registers",
+        before = "hello |world",
+        after  = "hello (nothing in any register)",
+        explanation = "Black hole register _ discards text. Use when you don't want to overwrite clipboard.",
+        aliases = { '"_d', '"_dd' },
+    },
+    {
+        keys = "\"+y",
+        desc = "Yank to system clipboard",
+        mode = "n",
+        category = "registers",
+        before = "|hello world",
+        after  = "[available for Ctrl+V anywhere]",
+        explanation = "Register + is system clipboard. Your config has clipboard=unnamedplus so yy does this automatically.",
+        aliases = { '"+y', '"+yy' },
+    },
+    {
+        keys = ":reg",
+        desc = "Show all registers",
+        mode = "n",
+        category = "registers",
+        before = "[any state]",
+        after  = "[displays all register contents]",
+        explanation = "See what's in each register. Useful for debugging clipboard issues.",
+    },
+
+    -- MARKS
+    {
+        keys = "ma",
+        desc = "Set mark 'a' at cursor",
+        mode = "n",
+        category = "marks",
+        before = "line 5, col 10",
+        after  = "[mark 'a' saved at this position]",
+        explanation = "Lowercase marks (a-z) are local to file. Uppercase (A-Z) are global across files.",
+    },
+    {
+        keys = "'a",
+        desc = "Jump to line of mark 'a'",
+        mode = "n",
+        category = "marks",
+        before = "[anywhere in file]",
+        after  = "[at start of line with mark a]",
+        aliases = { "'a" },
+    },
+    {
+        keys = "`a",
+        desc = "Jump to exact position of mark 'a'",
+        mode = "n",
+        category = "marks",
+        before = "[anywhere in file]",
+        after  = "[exact line AND column of mark a]",
+        explanation = "Backtick is more precise - goes to exact column, not just line.",
+        aliases = { "`a" },
+    },
+    {
+        keys = "``",
+        desc = "Jump to position before last jump",
+        mode = "n",
+        category = "marks",
+        before = "[after using gd or /search]",
+        after  = "[back where you were]",
+        explanation = "Like Ctrl+O but only for jumps, not general movement.",
+    },
+    {
+        keys = "`.",
+        desc = "Jump to last change",
+        mode = "n",
+        category = "marks",
+        before = "[anywhere after editing]",
+        after  = "[where you last edited]",
+        explanation = "Automatic mark - vim remembers where you made changes.",
+    },
+    {
+        keys = ":marks",
+        desc = "Show all marks",
+        mode = "n",
+        category = "marks",
+        before = "[any state]",
+        after  = "[displays all marks and positions]",
+    },
+
+    -- MACROS
+    {
+        keys = "qa",
+        desc = "Start recording macro into 'a'",
+        mode = "n",
+        category = "macros",
+        before = "[normal mode]",
+        after  = "[recording... shown in statusline]",
+        explanation = "Everything you type is recorded. Press q again to stop.",
+    },
+    {
+        keys = "q",
+        desc = "Stop recording macro",
+        mode = "n",
+        category = "macros",
+        before = "[while recording]",
+        after  = "[recording stopped]",
+    },
+    {
+        keys = "@a",
+        desc = "Play macro from register 'a'",
+        mode = "n",
+        category = "macros",
+        before = "[after recording macro]",
+        after  = "[replays all recorded keys]",
+        explanation = "Macros are just text in registers. You can even edit them!",
+    },
+    {
+        keys = "@@",
+        desc = "Replay last macro",
+        mode = "n",
+        category = "macros",
+        before = "[after running a macro]",
+        after  = "[runs same macro again]",
+    },
+    {
+        keys = "5@a",
+        desc = "Run macro 'a' five times",
+        mode = "n",
+        category = "macros",
+        before = "[5 similar lines to process]",
+        after  = "[macro applied to all 5]",
+        explanation = "Prefix any macro with count. Macro stops early if it hits an error.",
+    },
+
+    -- NEW PLUGIN KEYBINDINGS
+    -- Telescope
+    {
+        keys = "<Space>ff",
+        desc = "Find files (Telescope)",
+        mode = "n",
+        category = "plugins",
+        before = "[any state]",
+        after  = "[fuzzy file finder popup]",
+        explanation = "Fuzzy search across all project files. Type partial names.",
+        aliases = { "space ff", " ff", "leader ff" },
+    },
+    {
+        keys = "<Space>fg",
+        desc = "Live grep (Telescope)",
+        mode = "n",
+        category = "plugins",
+        before = "[any state]",
+        after  = "[search file contents]",
+        explanation = "Search for text across all files. Requires ripgrep.",
+        aliases = { "space fg", " fg", "leader fg" },
+    },
+    {
+        keys = "<Space>fb",
+        desc = "Find buffers (Telescope)",
+        mode = "n",
+        category = "plugins",
+        before = "[multiple files open]",
+        after  = "[buffer picker popup]",
+        aliases = { "space fb", " fb", "leader fb" },
+    },
+    {
+        keys = "<Space>fr",
+        desc = "Recent files (Telescope)",
+        mode = "n",
+        category = "plugins",
+        before = "[any state]",
+        after  = "[recently opened files]",
+        aliases = { "space fr", " fr", "leader fr" },
+    },
+
+    -- Leap
+    {
+        keys = "s",
+        desc = "Leap forward (s + 2 chars)",
+        mode = "n",
+        category = "plugins",
+        before = "|hello world foo bar",
+        after  = "hello world |foo bar  (after sfo)",
+        explanation = "Type s then 2 chars to jump. Shows labels if multiple matches.",
+    },
+    {
+        keys = "S",
+        desc = "Leap backward (S + 2 chars)",
+        mode = "n",
+        category = "plugins",
+        before = "hello world foo |bar",
+        after  = "|hello world foo bar  (after She)",
+    },
+
+    -- Mini.surround
+    {
+        keys = "sa",
+        desc = "Add surrounding",
+        mode = "n",
+        category = "plugins",
+        before = "|hello",
+        after  = '"hello"  (after saiw")',
+        explanation = "sa + motion + char. saiw\" surrounds word with quotes.",
+    },
+    {
+        keys = "sd",
+        desc = "Delete surrounding",
+        mode = "n",
+        category = "plugins",
+        before = '"hello|"',
+        after  = "hello  (after sd\")",
+        explanation = "sd + char. Removes the surrounding char on both sides.",
+    },
+    {
+        keys = "sr",
+        desc = "Replace surrounding",
+        mode = "n",
+        category = "plugins",
+        before = '"hello|"',
+        after  = "'hello'  (after sr\"')",
+        explanation = "sr + old + new. Changes surrounding from one char to another.",
+    },
+
+    -- Trouble
+    {
+        keys = "<Space>xx",
+        desc = "Toggle diagnostics (Trouble)",
+        mode = "n",
+        category = "plugins",
+        before = "[any state]",
+        after  = "[diagnostics panel]",
+        explanation = "Shows all errors/warnings in a nice list. Much better than :copen.",
+        aliases = { "space xx", " xx", "leader xx" },
+    },
+    {
+        keys = "<Space>xd",
+        desc = "Buffer diagnostics (Trouble)",
+        mode = "n",
+        category = "plugins",
+        before = "[any state]",
+        after  = "[current file errors only]",
+        aliases = { "space xd", " xd", "leader xd" },
+    },
+
+    -- Gitsigns
+    {
+        keys = "]h",
+        desc = "Next git hunk",
+        mode = "n",
+        category = "plugins",
+        before = "[in git repo]",
+        after  = "[cursor on next changed line]",
+        explanation = "Jump between changes in the file. Works with gitsigns.",
+    },
+    {
+        keys = "[h",
+        desc = "Previous git hunk",
+        mode = "n",
+        category = "plugins",
+        before = "[in git repo]",
+        after  = "[cursor on previous changed line]",
+    },
+    {
+        keys = "<Space>gs",
+        desc = "Stage git hunk",
+        mode = "n",
+        category = "plugins",
+        before = "[on a changed line]",
+        after  = "[change staged for commit]",
+        aliases = { "space gs", " gs", "leader gs" },
+    },
+    {
+        keys = "<Space>gr",
+        desc = "Reset git hunk",
+        mode = "n",
+        category = "plugins",
+        before = "[on a changed line]",
+        after  = "[change reverted]",
+        aliases = { "space gr", " gr", "leader gr" },
+    },
+    {
+        keys = "<Space>gp",
+        desc = "Preview git hunk",
+        mode = "n",
+        category = "plugins",
+        before = "[on a changed line]",
+        after  = "[floating diff of change]",
+        aliases = { "space gp", " gp", "leader gp" },
+    },
+    {
+        keys = "<Space>gb",
+        desc = "Git blame line",
+        mode = "n",
+        category = "plugins",
+        before = "[on any line]",
+        after  = "[shows who wrote this line]",
+        aliases = { "space gb", " gb", "leader gb" },
+    },
+
+    -- Comment.nvim
+    {
+        keys = "gcc",
+        desc = "Toggle comment on line",
+        mode = "n",
+        category = "plugins",
+        before = "|hello = 'world'",
+        after  = "# hello = 'world'",
+        explanation = "Toggles comment. Works with any language's comment style.",
+    },
+    {
+        keys = "gc",
+        desc = "Toggle comment (motion/visual)",
+        mode = "n",
+        category = "plugins",
+        before = "[select 3 lines in visual]",
+        after  = "[all 3 lines commented]",
+        explanation = "In normal: gc + motion (gcap = comment paragraph). In visual: gc.",
+    },
+
+    -- Escape insert mode
+    {
+        keys = "jk",
+        desc = "Exit insert mode (custom)",
+        mode = "i",
+        category = "plugins",
+        before = "[typing in insert mode]",
+        after  = "[back to normal mode]",
+        explanation = "Your custom mapping. Faster than reaching for Esc key.",
     },
 }
 
@@ -1134,6 +1612,124 @@ function M.start_weak()
 end
 
 -- ===========================================
+-- EXPLAIN MODE (browse keybindings by category)
+-- ===========================================
+M.explain_state = {
+    buf = nil,
+    win = nil,
+    category = nil,
+    scroll = 0,
+}
+
+function M.show_explain(category)
+    if M.explain_state.win and vim.api.nvim_win_is_valid(M.explain_state.win) then
+        vim.api.nvim_win_close(M.explain_state.win, true)
+    end
+
+    M.explain_state.category = category
+    M.explain_state.scroll = 0
+
+    -- Get challenges for category
+    local challenges = {}
+    if category then
+        for _, c in ipairs(M.all_challenges) do
+            if c.category == category then
+                table.insert(challenges, c)
+            end
+        end
+    else
+        challenges = M.all_challenges
+    end
+
+    local lines = {
+        "",
+        "  ╔═══════════════════════════════════════════════════════════════╗",
+        "  ║                    KEYBINDING REFERENCE                       ║",
+        "  ╚═══════════════════════════════════════════════════════════════╝",
+        "",
+    }
+
+    if category then
+        table.insert(lines, string.format("  Category: %s (%d keybindings)", category:upper(), #challenges))
+    else
+        table.insert(lines, string.format("  All categories (%d keybindings)", #challenges))
+    end
+    table.insert(lines, "")
+    table.insert(lines, "  ─────────────────────────────────────────────────────────────────")
+    table.insert(lines, "")
+
+    -- Group by category if showing all
+    local current_cat = nil
+    for _, c in ipairs(challenges) do
+        if not category and c.category ~= current_cat then
+            if current_cat then
+                table.insert(lines, "")
+            end
+            current_cat = c.category
+            table.insert(lines, string.format("  ═══ %s ═══", current_cat:upper()))
+            table.insert(lines, "")
+        end
+
+        table.insert(lines, string.format("  %-14s  %s", c.keys, c.desc))
+        if c.explanation then
+            table.insert(lines, string.format("                  └─ %s", c.explanation))
+        end
+        if c.before and c.after then
+            table.insert(lines, string.format("                  │  BEFORE: %s", c.before:gsub("\n.*", "...")))
+            table.insert(lines, string.format("                  └─ AFTER:  %s", c.after:gsub("\n.*", "...")))
+        end
+        table.insert(lines, "")
+    end
+
+    table.insert(lines, "  ─────────────────────────────────────────────────────────────────")
+    table.insert(lines, "  Press 'q' to close | j/k to scroll | number+category to practice")
+    table.insert(lines, "")
+
+    M.explain_state.buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_option(M.explain_state.buf, "buftype", "nofile")
+
+    local width = 75
+    local height = math.min(#lines + 2, vim.o.lines - 4)
+    local row = math.floor((vim.o.lines - height) / 2)
+    local col = math.floor((vim.o.columns - width) / 2)
+
+    M.explain_state.win = vim.api.nvim_open_win(M.explain_state.buf, true, {
+        relative = "editor",
+        width = width,
+        height = height,
+        row = row,
+        col = col,
+        style = "minimal",
+        border = "rounded",
+    })
+
+    vim.api.nvim_buf_set_lines(M.explain_state.buf, 0, -1, false, lines)
+
+    -- Keybindings for navigation
+    vim.keymap.set("n", "q", function()
+        if M.explain_state.win and vim.api.nvim_win_is_valid(M.explain_state.win) then
+            vim.api.nvim_win_close(M.explain_state.win, true)
+        end
+    end, { buffer = M.explain_state.buf })
+
+    vim.keymap.set("n", "j", function()
+        vim.cmd("normal! j")
+    end, { buffer = M.explain_state.buf })
+
+    vim.keymap.set("n", "k", function()
+        vim.cmd("normal! k")
+    end, { buffer = M.explain_state.buf })
+
+    vim.keymap.set("n", "<C-d>", function()
+        vim.cmd("normal! <C-d>")
+    end, { buffer = M.explain_state.buf })
+
+    vim.keymap.set("n", "<C-u>", function()
+        vim.cmd("normal! <C-u>")
+    end, { buffer = M.explain_state.buf })
+end
+
+-- ===========================================
 -- SETUP
 -- ===========================================
 function M.setup()
@@ -1158,6 +1754,16 @@ function M.setup()
     vim.api.nvim_create_user_command("WarmupWeak", function()
         M.start_weak()
     end, {})
+
+    vim.api.nvim_create_user_command("WarmupExplain", function(opts)
+        local cat = opts.args ~= "" and opts.args:lower() or nil
+        M.show_explain(cat)
+    end, {
+        nargs = "?",
+        complete = function()
+            return get_category_list()
+        end
+    })
 end
 
 return M
