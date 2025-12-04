@@ -214,3 +214,10 @@ vim.lsp.enable("rust_analyzer") -- Rust
 vim.lsp.enable("clangd")        -- C/C++
 vim.lsp.enable("gopls")         -- Go
 vim.lsp.enable("lua_ls")        -- Lua
+
+-----------------------------------------------------
+-- WARMUP GAME
+-- Run :Warmup 10 for 10 random challenges
+-- Run :WarmupAll for all challenges
+-----------------------------------------------------
+require("warmup").setup()
